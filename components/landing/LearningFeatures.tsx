@@ -67,7 +67,7 @@ export default function LearningFeatures() {
             {features.map((feature) => (
               <article
                 key={feature.title}
-                className={`flex aspect-square flex-col items-center justify-center rounded-card border-2 ${feature.color} bg-white p-4 text-center shadow-card`}
+                className={`flex aspect-square flex-col items-center justify-center rounded-card border-2 ${feature.color} bg-white p-4 text-center shadow-card sm:aspect-auto`}
               >
                 <h3 className="font-heading text-base font-extrabold uppercase text-black">
                   {feature.title}
