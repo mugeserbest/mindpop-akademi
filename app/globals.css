@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+:root {
+  --black: #251f35;
+  --white: #fbfaff;
+  --beige: #e3ddf2;
+  --cream: #eee8ff;
+  --grey: #6f687a;
+  --green: #a8ddb5;
+  --dark-green: #173c22;
+  --light-green: #b7e68a;
+  --blue: #a9d6f5;
+  --dark-blue: #0c2333;
+  --gold: #ffd65a;
+  --main-purple: #7b61ff;
+  --purple: #c7b6f8;
+  --dark-purple: #291954;
+  --pink: #ff6bcb;
+  --red: #f7b39a;
+  --dark-red: #401b11;
+  --brown: #f6d39a;
+  --dark-brown: #58360d;
+
+  --border-radius-card: 16px;
+  --border-radius-button: 25px;
+  --border-card: 1px solid #e3ddf2;
+  --shadow-card: 0 6px 18px rgb(41 25 84 / 8%);
+}
+
+@theme inline {
+  --color-black: var(--black);
+  --color-white: var(--white);
+  --color-beige: var(--beige);
+  --color-cream: var(--cream);
+  --color-grey: var(--grey);
+  --color-green: var(--green);
+  --color-dark-green: var(--dark-green);
+  --color-light-green: var(--light-green);
+  --color-blue: var(--blue);
+  --color-dark-blue: var(--dark-blue);
+  --color-gold: var(--gold);
+  --color-main-purple: var(--main-purple);
+  --color-purple: var(--purple);
+  --color-dark-purple: var(--dark-purple);
+  --color-pink: var(--pink);
+  --color-red: var(--red);
+  --color-dark-red: var(--dark-red);
+  --color-brown: var(--brown);
+  --color-dark-brown: var(--dark-brown);
+
+  --radius-card: var(--border-radius-card);
+  --radius-button: var(--border-radius-button);
+
+  --font-heading: var(--font-baloo);
+  --font-body: var(--font-nunito);
+  --shadow-card: var(--shadow-card);
+}
+
+@utility border-card {
+  border: var(--border-card);
+}
+
+body {
+  background: var(--white);
+  color: var(--black);
+  font-family: var(--font-body), sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading), sans-serif;
+}
+
+/* iOS, 16px altındaki metin girişlerine odaklanınca sayfayı yakınlaştırır. */
+@media (max-width: 639px) {
+  body .font-body:is(input, textarea, select) {
+    font-size: 16px;
+  }
+}
+
+.app-page {
+  min-height: 100vh;
+  background: var(--white);
+  padding: 0.75rem;
+  padding-bottom: 6rem;
+}
+
+.app-card {
+  border: var(--border-card);
+  border-radius: var(--border-radius-card);
+  background: var(--white);
+  box-shadow: var(--shadow-card);
+  padding: 1rem;
+}
+
+.app-card-feature {
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .app-page {
+    padding: 1.5rem;
+  }
+  .app-card {
+    padding: 1.25rem;
+  }
+
+  .app-card-feature {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-page {
+    padding: 2rem;
+    padding-bottom: 2rem;
+  }
+}
+.app-card-soft {
+  border: var(--border-card);
+  border-radius: var(--border-radius-card);
+  background: var(--cream);
+  box-shadow: var(--shadow-card);
+  padding: 1.25rem;
+}
+.app-card,
+.app-card-soft {
+  min-width: 0;
+}
