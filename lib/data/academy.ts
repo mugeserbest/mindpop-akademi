@@ -87,7 +87,7 @@ export async function getAcademyData() {
   const { data: worlds, error: worldsError } = await supabase
     .from("journey_worlds")
     .select(
-      "id, world_number, name, description, theme, xp_required, xp_earned, quiz_pass_score, quiz_best_score, main_task_approved, pop_messages, status",
+      "id, world_number, name, description, theme, xp_required, xp_earned, quiz_pass_score, quiz_best_score, main_task_approved, pop_messages, status, content_status",
     )
     .eq("journey_id", journey.id)
     .order("world_number", { ascending: true });

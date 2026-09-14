@@ -120,6 +120,14 @@ export default async function AkademiPage() {
       }
       currentXp={Number(data.currentWorld?.xp_earned ?? 0)}
       xpGoal={Number(data.currentWorld?.xp_required ?? 0)}
+      currentWorldId={data.currentWorld ? String(data.currentWorld.id) : null}
+      worldContentStatus={
+        data.currentWorld?.content_status === "pending" ||
+        data.currentWorld?.content_status === "generating" ||
+        data.currentWorld?.content_status === "failed"
+          ? data.currentWorld.content_status
+          : "ready"
+      }
       initialDailyTasks={dailyTasks}
       initialWeeklyTasks={weeklyTasks}
       mainTask={mainTask}

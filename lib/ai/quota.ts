@@ -5,6 +5,7 @@ export const AI_DAILY_LIMITS = {
   pop_message: 30,
   onboarding_reply: 15,
   journey_generation: 2,
+  world_content_generation: 5,
   main_task_review: 5,
 } as const;
 

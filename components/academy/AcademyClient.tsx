@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, type ChangeEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import TaskListCard from "../TaskListCard";
 import MainTaskCard from "../MainTaskCard";
@@ -64,6 +70,8 @@ type AcademyClientProps = {
   goalDescription: string;
   currentXp: number;
   xpGoal: number;
+  currentWorldId: string | null;
+  worldContentStatus: "pending" | "generating" | "ready" | "failed";
   initialDailyTasks: AcademyTask[];
   initialWeeklyTasks: AcademyTask[];
   mainTask: AcademyMainTask | null;
@@ -79,6 +87,8 @@ export default function AcademyClient({
   goalDescription,
   currentXp,
   xpGoal,
+  currentWorldId,
+  worldContentStatus,
   initialDailyTasks,
   initialWeeklyTasks,
   mainTask,
@@ -86,6 +96,62 @@ export default function AcademyClient({
   quiz,
 }: AcademyClientProps) {
   const router = useRouter();
+
+  const [isGeneratingWorldContent, setIsGeneratingWorldContent] =
+    useState(false);
+  const [worldContentError, setWorldContentError] = useState<string | null>(
+    null,
+  );
+  const requestedWorldId = useRef<string | null>(null);
+
+  const generateActiveWorldContent = useCallback(async () => {
+    if (!currentWorldId || isGeneratingWorldContent) {
+      return;
+    }
+
+    setIsGeneratingWorldContent(true);
+    setWorldContentError(null);
+
+    try {
+      const response = await fetch(
+        `/api/journeys/worlds/${encodeURIComponent(currentWorldId)}/generate-content`,
+        { method: "POST" },
+      );
+      const result = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+      };
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.error ?? "Yeni dünyanın görevleri hazırlanamadı.",
+        );
+      }
+
+      router.refresh();
+    } catch (error) {
+      setWorldContentError(
+        error instanceof Error
+          ? error.message
+          : "Yeni dünyanın görevleri hazırlanamadı. Lütfen tekrar dene.",
+      );
+    } finally {
+      setIsGeneratingWorldContent(false);
+    }
+  }, [currentWorldId, isGeneratingWorldContent, router]);
+
+  useEffect(() => {
+    if (
+      !currentWorldId ||
+      worldContentStatus === "ready" ||
+      requestedWorldId.current === currentWorldId
+    ) {
+      return;
+    }
+
+    requestedWorldId.current = currentWorldId;
+    void generateActiveWorldContent();
+  }, [currentWorldId, generateActiveWorldContent, worldContentStatus]);
 
   const [isQuizOpen, setIsQuizOpen] = useState(false);
 
@@ -424,6 +490,25 @@ export default function AcademyClient({
             </p>
           )}
 
+          {worldContentError && (
+            <div
+              role="alert"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-button border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"
+            >
+              <span>{worldContentError}</span>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  requestedWorldId.current = null;
+                  void generateActiveWorldContent();
+                }}
+              >
+                Tekrar Dene
+              </Button>
+            </div>
+          )}
+
           <div className="grid w-full gap-6 lg:grid-cols-2">
             <TaskListCard
               title="Günlük Görevler"
@@ -594,6 +679,13 @@ export default function AcademyClient({
         <ProcessingOverlay
           title="POP çalışmanı inceliyor"
           description="Teslimin güvenle kaydediliyor ve değerlendirme hazırlanıyor."
+        />
+      )}
+
+      {isGeneratingWorldContent && (
+        <ProcessingOverlay
+          title="Yeni dünya hazırlanıyor"
+          description="POP bu seviyeye özel görevleri, ana görevi ve quiz havuzunu hazırlıyor. Lütfen ekranı kapatmayın veya sayfayı yenilemeyin."
         />
       )}
     </main>
