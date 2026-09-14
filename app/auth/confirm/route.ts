@@ -20,6 +20,8 @@ export async function GET(request: NextRequest) {
     });
 
     if (!error) {
+      // E-posta ile ilk kez doğrulanan öğrenciyi POP'un tanışma akışına gönderir.
+      redirectTo.searchParams.set("onboarding", "true");
       return NextResponse.redirect(redirectTo);
     }
   }
