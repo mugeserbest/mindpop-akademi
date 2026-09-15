@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateRoadmap } from "@/lib/ai/generate-roadmap";
-import { consumeAiQuota } from "@/lib/ai/quota";
+import { consumeAiQuota, refundAiQuota } from "@/lib/ai/quota";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -83,6 +83,7 @@ export async function POST(request: Request) {
   }
 
   const adminSupabase = createAdminClient();
+  let shouldRefundQuota = false;
 
   const staleLockTime = new Date(Date.now() - 15 * 60 * 1000).toISOString();
 
@@ -184,6 +185,8 @@ export async function POST(request: Request) {
       );
     }
 
+    shouldRefundQuota = true;
+
     const roadmap = await generateRoadmap(roadmapInput);
 
     const { data, error: createError } = await adminSupabase.rpc(
@@ -204,6 +207,10 @@ export async function POST(request: Request) {
     if (!journeyId) {
       throw new Error("Yolculuk kimliği alınamadı.");
     }
+
+    // Yolculuk kalıcı olarak oluştu; bundan sonraki yardımcı işlemler hata verse
+    // bile oluşturma kotası tüketilmiş sayılır.
+    shouldRefundQuota = false;
 
     const { error: badgeError } = await adminSupabase.rpc(
       "evaluate_user_badges",
@@ -265,6 +272,14 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("AI yol haritası oluşturulamadı:", error);
+
+    if (shouldRefundQuota) {
+      try {
+        await refundAiQuota(adminSupabase, user.id, "journey_generation");
+      } catch (refundError) {
+        console.error("Yol haritası kotası iade edilemedi:", refundError);
+      }
+    }
 
     return NextResponse.json(
       {

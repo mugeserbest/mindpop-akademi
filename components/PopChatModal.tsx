@@ -21,6 +21,23 @@ type ChatMessage = {
 
 type OnboardingStatus = "collecting" | "ready" | null;
 
+async function readJsonResponse<T>(response: Response): Promise<T> {
+  const responseText = await response.text();
+
+  try {
+    return JSON.parse(responseText) as T;
+  } catch {
+    console.error("Geçersiz API yanıtı:", {
+      status: response.status,
+      body: responseText.slice(0, 500),
+    });
+
+    throw new Error(
+      "Yol haritası sunucudan tamamlanmış bir yanıt alınamadan durdu. Lütfen tekrar dene.",
+    );
+  }
+}
+
 export default function PopChatModal({
   open,
   onClose,
@@ -274,10 +291,10 @@ export default function PopChatModal({
         }),
       });
 
-      const result = (await response.json()) as {
+      const result = await readJsonResponse<{
         success: boolean;
         error?: string;
-      };
+      }>(response);
 
       if (!response.ok || !result.success) {
         throw new Error(result.error ?? "Yol haritası oluşturulamadı.");

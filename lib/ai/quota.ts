@@ -47,3 +47,18 @@ export async function consumeAiQuota(
 
   return data;
 }
+
+export async function refundAiQuota(
+  supabase: SupabaseClient,
+  userId: string,
+  action: AiQuotaAction,
+): Promise<void> {
+  const { error } = await supabase.rpc("refund_ai_quota", {
+    p_user_id: userId,
+    p_action: action,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}

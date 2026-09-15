@@ -1,14 +1,20 @@
-begin;
+-- Günlük ve haftalık görevler, veritabanı kuralının gerektirdiği döngü
+-- anahtarlarıyla oluşturulur. Her üç görev bir gün/hafta döngüsünü temsil eder.
+alter table public.world_tasks
+  add column if not exists cycle_key text;
 
-alter table public.journey_worlds
-  add column if not exists content_status text not null default 'ready';
+alter table public.world_tasks
+  drop constraint if exists world_tasks_recurring_cycle_key_check;
 
-alter table public.journey_worlds
-  drop constraint if exists journey_worlds_content_status_check;
-
-alter table public.journey_worlds
-  add constraint journey_worlds_content_status_check
-  check (content_status in ('pending', 'generating', 'ready', 'failed'));
+alter table public.world_tasks
+  add constraint world_tasks_recurring_cycle_key_check
+  check (
+    task_type not in ('daily', 'weekly')
+    or (
+      cycle_key is not null
+      and char_length(btrim(cycle_key)) between 8 and 50
+    )
+  );
 
 create or replace function public.populate_ai_generated_world_content(
   p_user_id uuid,
@@ -149,143 +155,34 @@ begin
 end;
 $$;
 
-create or replace function public.create_ai_generated_journey(
-  p_user_id uuid,
-  p_goal_prompt text,
-  p_roadmap jsonb
-)
-returns jsonb
-language plpgsql
-set search_path to ''
-as $$
-declare
-  v_journey_id bigint;
-  v_first_world_id bigint;
-  v_world_id bigint;
-  v_world jsonb;
-  v_world_order integer;
-begin
-  if char_length(btrim(p_goal_prompt)) not between 3 and 500
-    or jsonb_typeof(p_roadmap) <> 'object'
-    or jsonb_array_length(coalesce(p_roadmap -> 'worlds', '[]'::jsonb)) <> 5
-    or jsonb_typeof(p_roadmap -> 'first_world_content') <> 'object' then
-    raise exception 'Yol haritası geçersiz.' using errcode = '22023';
-  end if;
-
-  insert into public.learning_journeys (
-    user_id, goal_prompt, goal_name, reward_title, status,
-    current_world_position, started_at
-  ) values (
-    p_user_id, btrim(p_goal_prompt), btrim(p_roadmap ->> 'goal_name'),
-    btrim(p_roadmap ->> 'reward_title'), 'active', 1, now()
-  ) returning id into v_journey_id;
-
-  for v_world, v_world_order in
-    select value, ordinality::integer
-    from jsonb_array_elements(p_roadmap -> 'worlds') with ordinality
-  loop
-    insert into public.journey_worlds (
-      journey_id, world_number, name, description, theme, xp_required,
-      quiz_pass_score, status, unlocked_at, content_status
-    ) values (
-      v_journey_id, (v_world ->> 'world_number')::smallint,
-      btrim(v_world ->> 'name'), btrim(v_world ->> 'description'),
-      v_world ->> 'theme', (v_world ->> 'xp_required')::bigint,
-      (v_world ->> 'quiz_pass_score')::smallint,
-      case when v_world_order = 1 then 'active' else 'locked' end,
-      case when v_world_order = 1 then now() else null end,
-      case when v_world_order = 1 then 'generating' else 'pending' end
-    ) returning id into v_world_id;
-
-    if v_world_order = 1 then
-      v_first_world_id := v_world_id;
-    end if;
-  end loop;
-
-  perform public.populate_ai_generated_world_content(
-    p_user_id,
-    v_first_world_id,
-    p_roadmap -> 'first_world_content'
-  );
-
-  update public.profiles
-  set learning_goal = btrim(p_goal_prompt)
-  where id = p_user_id;
-
-  return jsonb_build_object('journey_id', v_journey_id);
-end;
-$$;
-
 revoke all on function public.populate_ai_generated_world_content(uuid, bigint, jsonb)
   from public, anon, authenticated;
 
 grant execute on function public.populate_ai_generated_world_content(uuid, bigint, jsonb)
   to service_role;
 
-revoke all on function public.create_ai_generated_journey(uuid, text, jsonb)
-  from public, anon, authenticated;
-
-grant execute on function public.create_ai_generated_journey(uuid, text, jsonb)
-  to service_role;
-
-alter table public.ai_usage_counters
-  drop constraint if exists ai_usage_counters_action_check;
-
-alter table public.ai_usage_counters
-  add constraint ai_usage_counters_action_check
-  check (action in (
-    'pop_message',
-    'onboarding_reply',
-    'journey_generation',
-    'world_content_generation',
-    'main_task_review'
-  ));
-
-create or replace function public.consume_ai_quota(
+-- Teknik bir hata yüzünden tamamlanamayan AI isteğinin kullanıcı kotasını
+-- tüketmemesi için yalnızca service_role tarafından çağrılabilir iade işlemi.
+create or replace function public.refund_ai_quota(
   p_user_id uuid,
-  p_action text,
-  p_limit integer
+  p_action text
 )
-returns jsonb
-language plpgsql
+returns void
+language sql
 set search_path to ''
 as $$
-declare v_count integer;
-begin
-  if p_limit < 1 or p_action not in (
-    'pop_message',
-    'onboarding_reply',
-    'journey_generation',
-    'world_content_generation',
-    'main_task_review'
-  ) then
-    raise exception 'Geçersiz yapay zekâ kotası.' using errcode = '22023';
-  end if;
-
-  insert into public.ai_usage_counters (user_id, action, usage_date, request_count)
-  values (p_user_id, p_action, (timezone('Europe/Istanbul', now()))::date, 1)
-  on conflict (user_id, action, usage_date) do update
-    set request_count = public.ai_usage_counters.request_count + 1,
-        updated_at = now()
-    where public.ai_usage_counters.request_count < p_limit
-  returning request_count into v_count;
-
-  if v_count is null then
-    return jsonb_build_object('allowed', false, 'limit', p_limit, 'remaining', 0);
-  end if;
-
-  return jsonb_build_object(
-    'allowed', true,
-    'limit', p_limit,
-    'remaining', greatest(p_limit - v_count, 0)
-  );
-end;
+  update public.ai_usage_counters
+  set
+    request_count = greatest(request_count - 1, 0),
+    updated_at = now()
+  where user_id = p_user_id
+    and action = p_action
+    and usage_date = (timezone('Europe/Istanbul', now()))::date
+    and request_count > 0;
 $$;
 
-revoke all on function public.consume_ai_quota(uuid, text, integer)
+revoke all on function public.refund_ai_quota(uuid, text)
   from public, anon, authenticated;
 
-grant execute on function public.consume_ai_quota(uuid, text, integer)
+grant execute on function public.refund_ai_quota(uuid, text)
   to service_role;
-
-commit;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateWorldContent } from "@/lib/ai/generate-world-content";
-import { consumeAiQuota } from "@/lib/ai/quota";
+import { consumeAiQuota, refundAiQuota } from "@/lib/ai/quota";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -98,6 +98,8 @@ export async function POST(
     );
   }
 
+  let shouldRefundQuota = false;
+
   try {
     const quota = await consumeAiQuota(
       adminSupabase,
@@ -119,6 +121,8 @@ export async function POST(
         { status: 429 },
       );
     }
+
+    shouldRefundQuota = true;
 
     const content = await generateWorldContent({
       goalPrompt: journey.goal_prompt,
@@ -146,9 +150,23 @@ export async function POST(
       throw populateError;
     }
 
+    shouldRefundQuota = false;
+
     return NextResponse.json({ success: true, alreadyGenerated: false });
   } catch (error) {
     console.error("AI dünya içeriği oluşturulamadı:", error);
+
+    if (shouldRefundQuota) {
+      try {
+        await refundAiQuota(
+          adminSupabase,
+          user.id,
+          "world_content_generation",
+        );
+      } catch (refundError) {
+        console.error("Dünya içeriği kotası iade edilemedi:", refundError);
+      }
+    }
 
     await adminSupabase
       .from("journey_worlds")
