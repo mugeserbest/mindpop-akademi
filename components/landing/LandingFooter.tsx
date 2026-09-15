@@ -15,9 +15,15 @@ export default function LandingFooter() {
           />
         </Link>
 
-        <p className="font-body text-xs text-grey">
-          © 2026 Mindpop Akademi. Öğrenmeyi maceraya dönüştür.
-        </p>
+        <div className="flex flex-col items-center gap-1 font-body text-xs text-grey sm:items-end">
+          <a
+            href="mailto:destek@mindpopakademi.com.tr"
+            className="transition-colors hover:text-purple"
+          >
+            İletişim: destek@mindpopakademi.com.tr
+          </a>
+          <p>© 2026 Mindpop Akademi. Öğrenmeyi maceraya dönüştür.</p>
+        </div>
       </div>
     </footer>
   );
