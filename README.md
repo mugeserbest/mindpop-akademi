@@ -1,5 +1,7 @@
 # Mindpop Akademi
 
+https://mindpopakademi.com.tr
+
 Mindpop Akademi, kullanıcıların seçtikleri beceri için yapay zekâ destekli ve oyunlaştırılmış öğrenme yol haritaları oluşturabildiği bir web uygulamasıdır.
 
 Kullanıcı; hedefini, mevcut seviyesini ve koşullarını POP adlı rehber asistanla konuşarak netleştirir. Ardından sistem beş dünyadan oluşan kişisel bir yolculuk, görevler, ana görevler ve soru havuzlu quizler oluşturur.
