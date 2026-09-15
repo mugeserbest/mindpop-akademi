@@ -131,3 +131,20 @@ h6 {
 .app-card-soft {
   min-width: 0;
 }
+
+@keyframes pop-celebration {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+
+  50% {
+    transform: translateY(-0.9rem) rotate(2deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-pop-celebration {
+    animation: pop-celebration 850ms ease-in-out infinite;
+  }
+}

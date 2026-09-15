@@ -725,8 +725,9 @@ export default function AcademyClient({
 
       {isGeneratingWorldContent && (
         <ProcessingOverlay
-          title="Yeni dünya hazırlanıyor"
-          description="POP bu seviyeye özel görevleri, ana görevi ve quiz havuzunu hazırlıyor. Lütfen ekranı kapatmayın veya sayfayı yenilemeyin."
+          variant="world-celebration"
+          title="Tebrikler, yeni dünyaya geçtin!"
+          description="POP yeni seviyene özel görevleri, ana görevi ve quiz havuzunu hazırlıyor. Maceran birazdan devam edecek."
         />
       )}
     </main>

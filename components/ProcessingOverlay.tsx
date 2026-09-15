@@ -3,12 +3,16 @@ import Image from "next/image";
 type ProcessingOverlayProps = {
   title: string;
   description: string;
+  variant?: "default" | "world-celebration";
 };
 
 export default function ProcessingOverlay({
   title,
   description,
+  variant = "default",
 }: ProcessingOverlayProps) {
+  const isWorldCelebration = variant === "world-celebration";
+
   return (
     <div
       className="fixed inset-0 z-[70] grid place-items-center bg-main-purple/25 p-4 backdrop-blur-sm"
@@ -18,14 +22,40 @@ export default function ProcessingOverlay({
     >
       <section className="w-full max-w-sm rounded-card border-card bg-white p-6 text-center shadow-xl sm:p-8">
         <div className="relative mx-auto h-24 w-24">
-          <div className="absolute inset-1 rounded-full border-4 border-cream border-t-main-purple motion-safe:animate-spin" />
+          {isWorldCelebration ? (
+            <>
+              <div className="absolute inset-0 rounded-full bg-gold/35" />
+              <span
+                aria-hidden="true"
+                className="absolute -top-2 -left-3 text-xl text-gold motion-safe:animate-pulse"
+              >
+                ✦
+              </span>
+              <span
+                aria-hidden="true"
+                className="absolute -right-3 bottom-2 text-lg text-pink motion-safe:animate-pulse"
+              >
+                ✦
+              </span>
+            </>
+          ) : (
+            <div className="absolute inset-1 rounded-full border-4 border-cream border-t-main-purple motion-safe:animate-spin" />
+          )}
           <Image
-            src="/images/pop-icon/el-sallayan-icon.png"
+            src={
+              isWorldCelebration
+                ? "/images/pop-icon/kutlayan-icon.png"
+                : "/images/pop-icon/el-sallayan-icon.png"
+            }
             alt=""
             width={96}
             height={96}
             unoptimized
-            className="relative h-24 w-24 object-contain"
+            className={`relative h-24 w-24 object-contain ${
+              isWorldCelebration
+                ? "motion-safe:animate-pop-celebration"
+                : ""
+            }`}
           />
         </div>
 
