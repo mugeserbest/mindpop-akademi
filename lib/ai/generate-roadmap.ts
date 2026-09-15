@@ -37,6 +37,9 @@ KALİTE KURALLARI
 - quiz_pass_score bir yüzdedir; 60-90 arasında tam sayı olmalı.
 - Birinci dünyadaki 9 günlük ve 9 haftalık görev ölçülebilir, açıklayıcı ve
   başlangıç seviyesine uygun olsun. Üçlü gruplar gün/hafta döngüsüyle kullanılır.
+- Haftalık görev başlıkları yalnızca yapılacak eylemi anlatsın. Başlıkta “1. Hafta”,
+  “Hafta 2”, gün/hafta numarası veya döngü etiketi kullanma; örneğin “Temel
+  selamlaşma diyaloğu kur” gibi somut bir ad yaz.
 - Görev açıklaması yapılacak işi, yaklaşık süreyi ve beklenen sonucu söylesin.
 - Ana görev gerçekçi biçimde teslim edilip değerlendirilebilsin; uygun teslim
   türlerini, ölçütleri ve 3-8 açıklamalı adımı ekle.

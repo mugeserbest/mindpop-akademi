@@ -20,6 +20,17 @@ const worldTypes: Record<string, AcademyWorld["type"]> = {
   kingdom: "krallik",
 };
 
+function removeWeeklyCyclePrefix(title: string) {
+  const cleanedTitle = title
+    .replace(
+      /^\s*(?:(?:hafta\s*\d+)|(?:\d+\s*\.?\s*hafta))\s*[-:–—]?\s*/i,
+      "",
+    )
+    .trim();
+
+  return cleanedTitle || title;
+}
+
 export default async function AkademiPage() {
   const data = await getAcademyData();
 
@@ -41,7 +52,7 @@ export default async function AkademiPage() {
     .filter((task) => task.task_type === "weekly")
     .map((task) => ({
       id: String(task.id),
-      title: task.title,
+      title: removeWeeklyCyclePrefix(task.title),
       description: task.description ?? undefined,
       xp: Number(task.xp_reward),
       completed: task.status === "completed",
