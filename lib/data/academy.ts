@@ -150,13 +150,17 @@ export async function getAcademyData() {
         completed
       ),
       main_task_submissions (
-  id,
-  status,
-  review_score,
-  review_feedback,
-  reviewed_at,
-  created_at
-)
+        id,
+        status,
+        submission_text,
+        review_score,
+        review_feedback,
+        reviewed_at,
+        created_at,
+        main_task_submission_attachments (
+          original_file_name
+        )
+      )
     `,
       )
       .eq("world_id", currentWorld.id)

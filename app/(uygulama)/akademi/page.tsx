@@ -68,6 +68,16 @@ export default async function AkademiPage() {
         reviewStatus: latestMainTaskSubmission?.status ?? null,
         reviewScore: latestMainTaskSubmission?.review_score ?? null,
         reviewFeedback: latestMainTaskSubmission?.review_feedback ?? null,
+        editableSubmissionText:
+          latestMainTaskSubmission?.status === "rejected"
+            ? (latestMainTaskSubmission.submission_text ?? "")
+            : "",
+        previousAttachmentNames:
+          latestMainTaskSubmission?.status === "rejected"
+            ? (latestMainTaskSubmission.main_task_submission_attachments ?? []).map(
+                (attachment) => attachment.original_file_name,
+              )
+            : [],
         completed: mainTaskRow.status === "completed",
         steps: [...(mainTaskRow.main_task_steps ?? [])]
           .sort((firstStep, secondStep) => {

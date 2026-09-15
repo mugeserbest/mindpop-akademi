@@ -44,6 +44,8 @@ type AcademyMainTask = {
   reviewStatus: "pending" | "approved" | "rejected" | null;
   reviewScore: number | null;
   reviewFeedback: string | null;
+  editableSubmissionText: string;
+  previousAttachmentNames: string[];
 };
 
 export type AcademyWorld = {
@@ -164,6 +166,7 @@ export default function AcademyClient({
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   const [submissionSent, setSubmissionSent] = useState(false);
+  const isResubmission = mainTask?.reviewStatus === "rejected";
   const allowsFileSubmission =
     mainTask?.submissionTypes.some((type) =>
       ["image", "audio", "video", "file"].includes(type),
@@ -210,6 +213,12 @@ export default function AcademyClient({
     }
     setSubmissionError(null);
     setSubmissionSent(false);
+    setSubmissionText(
+      mainTask.reviewStatus === "rejected"
+        ? mainTask.editableSubmissionText
+        : "",
+    );
+    setSelectedFiles([]);
     setIsMainTaskModalOpen(true);
   }
   function handleFilesChange(event: ChangeEvent<HTMLInputElement>) {
@@ -565,8 +574,20 @@ export default function AcademyClient({
       >
         <div>
           <p className="text-sm font-semibold text-black">
-            Çalışmanı aşağıdaki alana yaz veya yapıştır.
+            {isResubmission
+              ? "POP’un geri bildirimine göre çalışmanı düzenle ve yeniden gönder."
+              : "Çalışmanı aşağıdaki alana yaz veya yapıştır."}
           </p>
+
+          {isResubmission && mainTask?.reviewFeedback && (
+            <div className="mt-4 rounded-button border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <p className="font-bold">POP’un geri bildirimi</p>
+              {mainTask.reviewScore !== null && (
+                <p className="mt-1">Puan: {mainTask.reviewScore}/100</p>
+              )}
+              <p className="mt-1">{mainTask.reviewFeedback}</p>
+            </div>
+          )}
 
           <label
             htmlFor="main-task-submission"
@@ -616,6 +637,24 @@ export default function AcademyClient({
               <p className="mt-2 text-xs text-gray-500">
                 En fazla 5 dosya, her biri en fazla 5 MB; toplamda en fazla 10 MB.
               </p>
+
+              {isResubmission &&
+                mainTask.previousAttachmentNames.length > 0 && (
+                  <div className="mt-3 rounded-button bg-light-purple/30 px-3 py-2 text-xs text-grey">
+                    <p className="font-semibold text-black">
+                      Önceki teslimdeki dosyalar
+                    </p>
+                    <ul className="mt-1 list-disc pl-4">
+                      {mainTask.previousAttachmentNames.map((fileName) => (
+                        <li key={fileName}>{fileName}</li>
+                      ))}
+                    </ul>
+                    <p className="mt-2">
+                      Dosyayı değiştirmek veya yeniden göndermek için tekrar
+                      seçmelisin.
+                    </p>
+                  </div>
+                )}
 
               {acceptsMediaSubmission && (
                 <p className="mt-1 text-xs text-gray-500">
@@ -669,7 +708,9 @@ export default function AcademyClient({
                 ? "Gönderiliyor..."
                 : submissionSent
                   ? "POP’a Gönderildi"
-                  : "Teslimi POP’a Gönder"}
+                  : isResubmission
+                    ? "Düzenlenmiş Teslimi POP’a Gönder"
+                    : "Teslimi POP’a Gönder"}
             </Button>
           </div>
         </div>
