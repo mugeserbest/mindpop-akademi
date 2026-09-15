@@ -63,7 +63,26 @@
 body {
   background: var(--white);
   color: var(--black);
+  cursor: default;
   font-family: var(--font-body), sans-serif;
+}
+
+a,
+button,
+label[for],
+[role="button"] {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+input,
+textarea,
+select {
+  cursor: text;
 }
 
 h1,
