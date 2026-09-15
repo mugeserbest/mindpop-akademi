@@ -123,6 +123,7 @@ export default async function AkademiPage() {
 
   return (
     <AcademyClient
+      key={data.currentWorld ? String(data.currentWorld.id) : "no-active-world"}
       goalDescription={
         data.journey?.goal_name ??
         data.profile?.learning_goal ??
