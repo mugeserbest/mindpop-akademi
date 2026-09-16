@@ -89,6 +89,7 @@ export default async function DashboardPage() {
       initialDailyTasks={dailyTasks}
       initialWeeklyTasks={weeklyTasks}
       earnedBadgeKeys={earnedBadgeKeys}
+      resumeOnboarding={Boolean(data.onboardingSession)}
     />
   );
 }

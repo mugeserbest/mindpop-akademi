@@ -33,6 +33,7 @@ type DashboardClientProps = {
   initialWeeklyTasks: DashboardTask[];
   earnedBadgeKeys: string[];
   mainTaskApproved: boolean;
+  resumeOnboarding: boolean;
 };
 
 export default function DashboardClient({
@@ -51,6 +52,7 @@ export default function DashboardClient({
   initialWeeklyTasks,
   earnedBadgeKeys,
   mainTaskApproved,
+  resumeOnboarding,
 }: DashboardClientProps) {
   const router = useRouter();
 
@@ -69,7 +71,10 @@ export default function DashboardClient({
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
 
-    if (params.get("onboarding") !== "true") {
+    const shouldOpenOnboarding =
+      params.get("onboarding") === "true" || resumeOnboarding;
+
+    if (!shouldOpenOnboarding) {
       return;
     }
 
@@ -80,7 +85,7 @@ export default function DashboardClient({
     });
 
     return () => window.cancelAnimationFrame(frameId);
-  }, []);
+  }, [resumeOnboarding]);
 
   async function handleCompleteTask(taskId: string) {
     // Başka bir görev kaydediliyorsa yeni işlem başlatmaz.

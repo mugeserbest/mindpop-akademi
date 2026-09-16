@@ -15,7 +15,13 @@ export async function getAcademyData() {
   }
 
   // Profil, aktif yolculuk ve kazanılmış unvanları aynı anda getirir.
-  const [profileResult, journeyResult, titlesResult, badgesResult] =
+  const [
+    profileResult,
+    journeyResult,
+    titlesResult,
+    badgesResult,
+    onboardingResult,
+  ] =
     await Promise.all([
       supabase
         .from("profiles")
@@ -45,6 +51,16 @@ export async function getAcademyData() {
         .select("badge_key, earned_at")
         .eq("user_id", user.id)
         .order("earned_at", { ascending: true }),
+
+      // Yarım bırakılan tanışma sohbeti dashboard'a dönüldüğünde devam eder.
+      supabase
+        .from("onboarding_sessions")
+        .select("conversation_id, status")
+        .eq("user_id", user.id)
+        .in("status", ["collecting", "ready"])
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
 
   if (profileResult.error) {
@@ -63,7 +79,14 @@ export async function getAcademyData() {
     throw new Error(`Rozetler okunamadı: ${badgesResult.error.message}`);
   }
 
+  if (onboardingResult.error) {
+    throw new Error(
+      `Yarım kalan POP görüşmesi okunamadı: ${onboardingResult.error.message}`,
+    );
+  }
+
   const journey = journeyResult.data;
+  const onboardingSession = onboardingResult.data;
 
   // Kullanıcının henüz yolculuğu yoksa boş bilgi döndürür.
   if (!journey) {
@@ -80,6 +103,7 @@ export async function getAcademyData() {
       quiz: null,
       titles: titlesResult.data ?? [],
       badges: badgesResult.data ?? [],
+      onboardingSession,
     };
   }
 
@@ -119,6 +143,7 @@ export async function getAcademyData() {
       quiz: null,
       titles: titlesResult.data ?? [],
       badges: badgesResult.data ?? [],
+      onboardingSession,
     };
   }
 
@@ -210,5 +235,6 @@ time_limit_minutes,
     quiz: quizResult.data,
     titles: titlesResult.data ?? [],
     badges: badgesResult.data ?? [],
+    onboardingSession,
   };
 }
