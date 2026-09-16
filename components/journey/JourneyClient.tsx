@@ -100,6 +100,8 @@ export default function JourneyClient({
         <ShareProgressCard
           title="İlerlemeni Paylaş"
           text="Çok iyi iş çıkardın! Başarını arkadaşlarınla paylaş."
+          shareTitle="Mindpop Akademi’de öğrenme yolculuğum"
+          shareText={`Mindpop Akademi’de “${goalDescription}” hedefim için ${levelNumber}. dünyada ilerliyorum. ${currentXp} / ${xpGoal} XP’ye ulaştım. Sen de öğrenme hedefini maceraya dönüştür!`}
         />
       </div>
     </main>

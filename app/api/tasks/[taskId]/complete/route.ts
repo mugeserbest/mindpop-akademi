@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { evaluateAndGetNewBadgeKeys } from "../../../../../lib/badges/evaluate-user-badges";
 import { createAdminClient } from "../../../../../lib/supabase/admin";
 import { createClient } from "../../../../../lib/supabase/server";
 
@@ -65,5 +66,51 @@ export async function POST(
     );
   }
 
-  return NextResponse.json(data);
+  // RPC kullanıcının bu görevi sahiplenebildiğini doğruladıktan sonra, dünya
+  // geçişi kontrolü için dünya kimliğini okuruz.
+  const { data: task, error: taskError } = await adminSupabase
+    .from("world_tasks")
+    .select("world_id")
+    .eq("id", Number(taskId))
+    .maybeSingle();
+
+  if (taskError || !task) {
+    console.error("Görevin dünya bilgisi okunamadı:", taskError);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Görev bilgisi şu anda okunamadı. Lütfen tekrar dene.",
+      },
+      { status: 400 },
+    );
+  }
+
+  // XP son eksik koşulsa, görev biter bitmez dünya geçişi tetiklenmelidir.
+  const { data: progress, error: progressError } = await adminSupabase.rpc(
+    "complete_world_if_eligible",
+    {
+      p_user_id: user.id,
+      p_world_id: task.world_id,
+    },
+  );
+
+  if (progressError) {
+    console.error("Görev sonrası dünya geçişi kontrol hatası:", progressError);
+  }
+
+  let newBadgeKeys: string[] = [];
+
+  try {
+    newBadgeKeys = await evaluateAndGetNewBadgeKeys(adminSupabase, user.id);
+  } catch (badgeError) {
+    console.error("Görev sonrası rozet kontrol hatası:", badgeError);
+  }
+
+  return NextResponse.json({
+    ...(typeof data === "object" && data !== null ? data : {}),
+    success: true,
+    progress: progressError ? null : progress,
+    newBadgeKeys,
+  });
 }

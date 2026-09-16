@@ -8,12 +8,16 @@ import { useState } from "react";
 type ShareProgressCardProps = {
   title: string;
   text: string;
+  shareTitle?: string;
+  shareText?: string;
   onShare?: () => void;
 };
 
 export default function ShareProgressCard({
   title,
   text,
+  shareTitle = "Mindpop Akademi",
+  shareText = text,
   onShare,
 }: ShareProgressCardProps) {
   const [shareMessage, setShareMessage] = useState("");
@@ -40,7 +44,7 @@ export default function ShareProgressCard({
   }
 
   async function handleShare() {
-    const shareText = `${title} — ${text}\n${window.location.href}`;
+    const shareContent = `${shareText}\n${window.location.href}`;
 
     setShareMessage("");
     setManualShareText("");
@@ -48,12 +52,12 @@ export default function ShareProgressCard({
     try {
       if (navigator.share) {
         await navigator.share({
-          title: "Mindpop Akademi",
-          text: `${title} — ${text}`,
+          title: shareTitle,
+          text: shareText,
           url: window.location.href,
         });
 
-        setShareMessage("İlerlemen paylaşıldı!");
+        setShareMessage("Harika! İlerlemen paylaşıldı.");
         return;
       }
     } catch (error) {
@@ -64,18 +68,18 @@ export default function ShareProgressCard({
     }
 
     try {
-      const copied = await copyShareText(shareText);
+      const copied = await copyShareText(shareContent);
 
       if (copied) {
-        setShareMessage("Bağlantı panoya kopyalandı!");
+        setShareMessage("Paylaşım metni ve bağlantı panoya kopyalandı.");
         return;
       }
     } catch {
       // Sonraki adımda kopyalanabilir metni kullanıcıya gösteririz.
     }
 
-    setShareMessage("Bağlantıyı buradan kopyalayabilirsin:");
-    setManualShareText(shareText);
+    setShareMessage("Paylaşım metnini buradan kopyalayabilirsin:");
+    setManualShareText(shareContent);
   }
 
   return (

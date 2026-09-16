@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { evaluateAndGetNewBadgeKeys } from "@/lib/badges/evaluate-user-badges";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -114,21 +115,18 @@ export async function POST(request: Request) {
     console.error("Dünya geçişi kontrol hatası:", progressError);
   }
 
-  const { data: badges, error: badgesError } = await adminSupabase.rpc(
-    "evaluate_user_badges",
-    {
-      p_user_id: user.id,
-    },
-  );
+  let newBadgeKeys: string[] = [];
 
-  if (badgesError) {
-    console.error("Rozet denetim hatası:", badgesError);
+  try {
+    newBadgeKeys = await evaluateAndGetNewBadgeKeys(adminSupabase, user.id);
+  } catch (badgeError) {
+    console.error("Quiz sonrası rozet denetim hatası:", badgeError);
   }
 
   return NextResponse.json({
     success: true,
     result,
     progress: progressError ? null : progress,
-    badges: badgesError ? null : badges,
+    newBadgeKeys,
   });
 }

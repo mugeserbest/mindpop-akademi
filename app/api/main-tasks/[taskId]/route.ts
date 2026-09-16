@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { evaluateAndGetNewBadgeKeys } from "@/lib/badges/evaluate-user-badges";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -783,7 +784,7 @@ export async function POST(
     }
 
     let progress: unknown = null;
-    let badges: unknown = null;
+    let newBadgeKeys: string[] = [];
 
     // Yalnızca onaylanan ana görev, dünya geçişi ve rozet kontrolünü tetikler.
     if (evaluation.decision === "approved") {
@@ -802,17 +803,13 @@ export async function POST(
         progress = progressData;
       }
 
-      const { data: badgesData, error: badgesError } = await adminSupabase.rpc(
-        "evaluate_user_badges",
-        {
-          p_user_id: user.id,
-        },
-      );
-
-      if (badgesError) {
-        console.error("Ana görev sonrası rozet kontrol hatası:", badgesError);
-      } else {
-        badges = badgesData;
+      try {
+        newBadgeKeys = await evaluateAndGetNewBadgeKeys(
+          adminSupabase,
+          user.id,
+        );
+      } catch (badgeError) {
+        console.error("Ana görev sonrası rozet kontrol hatası:", badgeError);
       }
     }
 
@@ -826,7 +823,7 @@ export async function POST(
       evaluation,
       reviewResult: reviewResult.data,
       progress,
-      badges,
+      newBadgeKeys,
     });
   } catch (evaluationError) {
     console.error("POP ana görev değerlendirme hatası:", evaluationError);

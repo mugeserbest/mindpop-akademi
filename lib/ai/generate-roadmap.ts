@@ -13,7 +13,10 @@ export async function generateRoadmap(
   const response = await openai.responses.create({
     model: "gpt-5.6-luna",
     reasoning: { effort: "none" },
-    max_output_tokens: 12000,
+    // İlk dünya için çok sayıda görev ve quiz sorusu gerekiyor. Yanıtın kısa
+    // tutulması, Netlify'nin eşzamanlı istek süresine güvenle sığması için
+    // önemlidir; şema yine tüm gerekli içeriği zorunlu kılar.
+    max_output_tokens: 6500,
     instructions: `
 ${POP_CORE_RULES}
 
@@ -42,9 +45,12 @@ KALİTE KURALLARI
   selamlaşma diyaloğu kur” gibi somut bir ad yaz.
 - Görev açıklaması yapılacak işi, yaklaşık süreyi ve beklenen sonucu söylesin.
 - Ana görev gerçekçi biçimde teslim edilip değerlendirilebilsin; uygun teslim
-  türlerini, ölçütleri ve 3-8 açıklamalı adımı ekle.
+  türlerini, ölçütleri ve 3-5 açıklamalı adımı ekle.
 - Quiz soruları 4 seçenekli, tek doğru cevaplı ve öğretici açıklamalı olsun.
 - Metinleri Türkçe yaz; öğrenme içeriği hedef dil gerektiriyorsa o dil kullanılabilir.
+- Yanıtı kısa ve yoğun tut: görev açıklamaları tek kısa cümle, POP mesajları
+  tek kısa cümle, ana görev yönergesi en fazla üç kısa cümle olsun. Quiz sorusu,
+  seçenekleri ve açıklaması da gereksiz tekrar içermesin.
 - Yalnızca istenen JSON biçiminde cevap ver.
       `,
     input: `Kullanıcının öğrenme hedefi: ${goalPrompt}`,

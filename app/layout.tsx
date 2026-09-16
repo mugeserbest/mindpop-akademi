@@ -19,6 +19,20 @@ const nunito = localFont({
 export const metadata: Metadata = {
   title: "Mindpop Akademi",
   description: "Öğrenmeyi maceraya dönüştüren kişisel öğrenme alanı.",
+  metadataBase: new URL("https://mindpopakademi.com.tr"),
+  openGraph: {
+    title: "Mindpop Akademi | Öğrenmeyi maceraya dönüştür",
+    description:
+      "Hedefini yaz, POP sana özel öğrenme yol haritanı hazırlasın.",
+    type: "website",
+    locale: "tr_TR",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mindpop Akademi | Öğrenmeyi maceraya dönüştür",
+    description:
+      "Hedefini yaz, POP sana özel öğrenme yol haritanı hazırlasın.",
+  },
 };
 
 export default function RootLayout({

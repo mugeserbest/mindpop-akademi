@@ -55,7 +55,7 @@ type QuizModalProps = {
   onClose: () => void;
   title: string;
   quizId: string;
-  onQuizCompleted?: () => void;
+  onQuizCompleted?: (newBadgeKeys: string[]) => void;
 };
 
 function isQuizQuestion(value: unknown): value is QuizQuestionResponse {
@@ -289,6 +289,7 @@ export default function QuizModal({
         success?: boolean;
         error?: string;
         result?: unknown;
+        newBadgeKeys?: unknown;
       };
 
       if (!response.ok || !data.success || !isQuizResult(data.result)) {
@@ -303,7 +304,13 @@ export default function QuizModal({
         passed: data.result.passed,
       });
 
-      onQuizCompleted?.();
+      onQuizCompleted?.(
+        Array.isArray(data.newBadgeKeys)
+          ? data.newBadgeKeys.filter(
+              (badgeKey): badgeKey is string => typeof badgeKey === "string",
+            )
+          : [],
+      );
     } catch (finishError) {
       setError(
         finishError instanceof Error

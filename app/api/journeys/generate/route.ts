@@ -4,6 +4,14 @@ import { consumeAiQuota, refundAiQuota } from "@/lib/ai/quota";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
+// Netlify'de tamamlanmadan kesilen bir istek, finally bloğuna ulaşamayabilir.
+// Kilit, gerçek bir üretimi engelleyecek kadar uzun; kullanıcıyı kilitleyecek
+// kadar uzun olmayan kısa bir süre sonra tekrar denenebilir olmalıdır.
+const GENERATION_LOCK_TIMEOUT_MS = 90 * 1000;
+
 type GenerationPayload = {
   goalPrompt: string;
   onboardingConversationId: number | null;
@@ -85,7 +93,9 @@ export async function POST(request: Request) {
   const adminSupabase = createAdminClient();
   let shouldRefundQuota = false;
 
-  const staleLockTime = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  const staleLockTime = new Date(
+    Date.now() - GENERATION_LOCK_TIMEOUT_MS,
+  ).toISOString();
 
   await adminSupabase
     .from("ai_generation_locks")
@@ -235,7 +245,13 @@ export async function POST(request: Request) {
         .eq("user_id", user.id);
 
       if (onboardingUpdateError) {
-        throw onboardingUpdateError;
+        // Yolculuk bu noktada kalıcı olarak oluştu. Onboarding kaydındaki bu
+        // yardımcı güncellemenin başarısız olması, kullanıcıya yanlışlıkla
+        // "oluşturulamadı" hatası göstermemeli.
+        console.error(
+          "Onboarding oturumu onaylandı olarak işaretlenemedi:",
+          onboardingUpdateError.message,
+        );
       }
     }
 

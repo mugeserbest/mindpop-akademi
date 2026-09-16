@@ -17,6 +17,7 @@ import QuizCard from "../QuizCard";
 import QuizModal from "../QuizModal";
 import Modal from "../Modal";
 import Button from "../button";
+import BadgeCelebrationModal from "../BadgeCelebrationModal";
 import ProcessingOverlay from "../ProcessingOverlay";
 import { extractVideoFrames } from "@/lib/video-frames";
 
@@ -68,6 +69,11 @@ export type AcademyQuiz = {
   questionCount: number;
 };
 
+type BadgeCelebration = {
+  key: string;
+  reason: string;
+};
+
 type AcademyClientProps = {
   goalDescription: string;
   currentXp: number;
@@ -98,6 +104,33 @@ export default function AcademyClient({
   quiz,
 }: AcademyClientProps) {
   const router = useRouter();
+  const [badgeCelebrations, setBadgeCelebrations] = useState<
+    BadgeCelebration[]
+  >([]);
+
+  function enqueueBadgeCelebrations(badgeKeys: string[], reason: string) {
+    if (badgeKeys.length === 0) {
+      return;
+    }
+
+    setBadgeCelebrations((currentCelebrations) => [
+      ...currentCelebrations,
+      ...badgeKeys
+        .filter(
+          (badgeKey) =>
+            !currentCelebrations.some(
+              (celebration) => celebration.key === badgeKey,
+            ),
+        )
+        .map((badgeKey) => ({ key: badgeKey, reason })),
+    ]);
+  }
+
+  function closeCurrentBadgeCelebration() {
+    setBadgeCelebrations((currentCelebrations) =>
+      currentCelebrations.slice(1),
+    );
+  }
 
   const [isGeneratingWorldContent, setIsGeneratingWorldContent] =
     useState(false);
@@ -368,6 +401,7 @@ export default function AcademyClient({
       const result = (await response.json()) as {
         success?: boolean;
         error?: string;
+        newBadgeKeys?: unknown;
       };
 
       if (!response.ok || !result.success) {
@@ -386,6 +420,15 @@ export default function AcademyClient({
         currentTasks.map((task) =>
           task.id === taskId ? { ...task, completed: true } : task,
         ),
+      );
+
+      enqueueBadgeCelebrations(
+        Array.isArray(result.newBadgeKeys)
+          ? result.newBadgeKeys.filter(
+              (badgeKey): badgeKey is string => typeof badgeKey === "string",
+            )
+          : [],
+        "bir görevi tamamladığın",
       );
 
       router.refresh();
@@ -443,6 +486,7 @@ export default function AcademyClient({
       const result = (await response.json()) as {
         success?: boolean;
         error?: string;
+        newBadgeKeys?: unknown;
       };
 
       if (!response.ok || !result.success) {
@@ -453,6 +497,14 @@ export default function AcademyClient({
       setIsMainTaskModalOpen(false);
       setSubmissionText("");
       setSelectedFiles([]);
+      enqueueBadgeCelebrations(
+        Array.isArray(result.newBadgeKeys)
+          ? result.newBadgeKeys.filter(
+              (badgeKey): badgeKey is string => typeof badgeKey === "string",
+            )
+          : [],
+        "ana görevi başarıyla tamamladığın",
+      );
       router.refresh();
     } catch (error) {
       setSubmissionError(
@@ -565,7 +617,10 @@ export default function AcademyClient({
         onClose={() => setIsQuizOpen(false)}
         title={quiz?.title ?? "Quiz"}
         quizId={quiz?.id ?? ""}
-        onQuizCompleted={() => router.refresh()}
+        onQuizCompleted={(newBadgeKeys) => {
+          enqueueBadgeCelebrations(newBadgeKeys, "quiz’i tamamladığın");
+          router.refresh();
+        }}
       />
       <Modal
         open={isMainTaskModalOpen}
@@ -728,6 +783,14 @@ export default function AcademyClient({
           variant="world-celebration"
           title="Tebrikler, yeni dünyaya geçtin!"
           description="POP yeni seviyene özel görevleri, ana görevi ve quiz havuzunu hazırlıyor. Maceran birazdan devam edecek."
+        />
+      )}
+
+      {!isGeneratingWorldContent && badgeCelebrations[0] && (
+        <BadgeCelebrationModal
+          badgeKey={badgeCelebrations[0].key}
+          reason={badgeCelebrations[0].reason}
+          onClose={closeCurrentBadgeCelebration}
         />
       )}
     </main>
