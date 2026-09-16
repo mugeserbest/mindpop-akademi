@@ -16,7 +16,7 @@ export async function generateRoadmap(
     // İlk dünya için çok sayıda görev ve quiz sorusu gerekiyor. Yanıtın kısa
     // tutulması, Netlify'nin eşzamanlı istek süresine güvenle sığması için
     // önemlidir; şema yine tüm gerekli içeriği zorunlu kılar.
-    max_output_tokens: 6500,
+    max_output_tokens: 4500,
     instructions: `
 ${POP_CORE_RULES}
 
@@ -48,9 +48,9 @@ KALİTE KURALLARI
   türlerini, ölçütleri ve 3-5 açıklamalı adımı ekle.
 - Quiz soruları 4 seçenekli, tek doğru cevaplı ve öğretici açıklamalı olsun.
 - Metinleri Türkçe yaz; öğrenme içeriği hedef dil gerektiriyorsa o dil kullanılabilir.
-- Yanıtı kısa ve yoğun tut: görev açıklamaları tek kısa cümle, POP mesajları
-  tek kısa cümle, ana görev yönergesi en fazla üç kısa cümle olsun. Quiz sorusu,
-  seçenekleri ve açıklaması da gereksiz tekrar içermesin.
+- Yanıtı kısa ve yoğun tut: görev açıklamaları ve POP mesajları tek kısa cümle,
+  ana görev yönergesi en fazla iki kısa cümle olsun. Quiz sorusu, seçenekleri ve
+  açıklaması çok kısa olsun; her açıklama en fazla 12 kelime içersin.
 - Yalnızca istenen JSON biçiminde cevap ver.
       `,
     input: `Kullanıcının öğrenme hedefi: ${goalPrompt}`,

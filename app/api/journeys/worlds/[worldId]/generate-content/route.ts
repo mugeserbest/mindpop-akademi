@@ -5,6 +5,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
+
+const GENERATION_LOCK_TIMEOUT_MS = 90 * 1000;
 
 export async function POST(
   _request: Request,
@@ -69,15 +72,37 @@ export async function POST(
     return NextResponse.json({ success: true, alreadyGenerated: true });
   }
 
-  const staleTime = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  const staleTime = new Date(
+    Date.now() - GENERATION_LOCK_TIMEOUT_MS,
+  ).toISOString();
 
   if (world.content_status === "generating") {
-    await adminSupabase
+    const { data: staleWorld, error: staleWorldError } = await adminSupabase
       .from("journey_worlds")
       .update({ content_status: "pending" })
       .eq("id", numericWorldId)
       .eq("content_status", "generating")
-      .lt("updated_at", staleTime);
+      .lt("updated_at", staleTime)
+      .select("id")
+      .maybeSingle();
+
+    if (staleWorldError) {
+      console.error("Takılan dünya üretimi sıfırlanamadı:", staleWorldError);
+    }
+
+    // Süre aşımında çalışan sunucu işlemi catch/finally bloğuna ulaşamaz.
+    // Bu durumda bir sonraki güvenli denemede kotayı bir kez geri veririz.
+    if (staleWorld) {
+      try {
+        await refundAiQuota(
+          adminSupabase,
+          user.id,
+          "world_content_generation",
+        );
+      } catch (refundError) {
+        console.error("Takılan dünya üretiminin kotası iade edilemedi:", refundError);
+      }
+    }
   }
 
   const { data: reservedWorld, error: reserveError } = await adminSupabase

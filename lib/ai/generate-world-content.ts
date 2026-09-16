@@ -22,7 +22,7 @@ export async function generateWorldContent({
   const response = await openai.responses.create({
     model: "gpt-5.6-luna",
     reasoning: { effort: "none" },
-    max_output_tokens: 11000,
+    max_output_tokens: 4500,
     instructions: `
 ${POP_CORE_RULES}
 
@@ -33,9 +33,11 @@ Aktif öğrenme dünyası için içerik oluşturuyorsun.
 - Haftalık görev başlıklarında “1. Hafta”, “Hafta 2”, gün/hafta numarası veya
   döngü etiketi kullanma. Başlık doğrudan yapılacak eylemi anlatsın.
 - Açıklamalarda yapılacak iş, yaklaşık süre ve beklenen sonuç yer alsın.
-- Gerçekçi bir ana görev, 3-8 açıklamalı adım, teslim yönergesi ve 3-6 değerlendirme
+- Her görev açıklamasını tek, kısa cümleyle sınırla; gereksiz giriş ve tekrar yazma.
+- Gerçekçi bir ana görev, 3-5 açıklamalı adım, kısa teslim yönergesi ve 3 değerlendirme
   ölçütü üret.
 - Bu dünya için tam 15 soruluk, 4 seçenekli, tek doğru cevaplı quiz havuzu üret.
+- Soru, seçenek ve açıklamaları çok kısa tut; her açıklama en fazla 12 kelime olsun.
 - POP mesajlarını kullanıcının bu dünyadaki ilerlemesine göre yaz.
 - Metinler Türkçe olsun; öğrenme içeriği hedef dil gerektiriyorsa o dil kullanılabilir.
 - Yalnızca istenen JSON biçiminde cevap ver.
